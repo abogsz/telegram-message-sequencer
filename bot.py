@@ -12,6 +12,7 @@ CHANNEL_ID = os.getenv("CHANNEL_ID")
 TOTAL_QUESTIONS = 155
 DELAY = 1
 
+option_emojis = ["🔴", "🔵", "🟢", "🟡"]
 
 async def main():
     if not TOKEN or not CHANNEL_ID:
@@ -22,21 +23,20 @@ async def main():
     for question in range(1, TOTAL_QUESTIONS + 1):
 
         await bot.send_message(
+        chat_id=CHANNEL_ID,
+        text=f"📝 سؤال {question}:"
+    )
+    
+    await asyncio.sleep(DELAY)
+
+
+    for option in range(1, 5):
+        await bot.send_message(
             chat_id=CHANNEL_ID,
-            text=f"سوال {question}"
+            text=f"{option_emojis[option - 1]} گزینه {option}"
         )
 
         await asyncio.sleep(DELAY)
-
-        for option in range(1, 5):
-
-            await bot.send_message(
-                chat_id=CHANNEL_ID,
-                text=f"گزینه {option}"
-            )
-
-            await asyncio.sleep(DELAY)
-
     print("ارسال تمام شد.")
 
 
