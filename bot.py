@@ -1,29 +1,51 @@
 import asyncio
 import os
 
-from dotenv import load_dotenv
 from telegram import Bot
+from telegram.error import RetryAfter
 from telegram.request import HTTPXRequest
 
-load_dotenv()
 
 TOKEN = os.getenv("BOT_TOKEN")
 CHANNEL_ID = os.getenv("CHANNEL_ID")
 
 TOTAL_QUESTIONS = 155
-DELAY = 1
+DELAY = 2
 
 OPTION_EMOJIS = ["🔴", "🔵", "🟢", "🟡"]
 
 
+async def send_message(bot, text):
+    while True:
+        try:
+            await bot.send_message(
+                chat_id=CHANNEL_ID,
+                text=text
+            )
+            return
+
+        except RetryAfter as error:
+            wait_time = error.retry_after
+
+            print(
+                f"Flood control detected. "
+                f"Waiting {wait_time} seconds..."
+            )
+
+            await asyncio.sleep(wait_time)
+
+
 async def main():
+
     if not TOKEN or not CHANNEL_ID:
-        raise ValueError("BOT_TOKEN or CHANNEL_ID is not set in .env")
+        raise ValueError(
+            "BOT_TOKEN or CHANNEL_ID is not set"
+        )
 
     request = HTTPXRequest(
-        read_timeout=30,
-        write_timeout=30,
-        connect_timeout=30,
+        read_timeout=60,
+        write_timeout=60,
+        connect_timeout=60,
         pool_timeout=10,
     )
 
@@ -32,25 +54,33 @@ async def main():
         request=request,
     )
 
+    print("Starting...")
+    print(f"Questions: {TOTAL_QUESTIONS}")
+    print(f"Delay: {DELAY} seconds")
+
     for question in range(1, TOTAL_QUESTIONS + 1):
 
-        await bot.send_message(
-            chat_id=CHANNEL_ID,
-            text=f"📝 سؤال {question}:"
+        # Question
+        await send_message(
+            bot,
+            f"📝 سؤال {question}:"
         )
 
         await asyncio.sleep(DELAY)
 
+        # Options
         for option in range(1, 5):
 
-            await bot.send_message(
-                chat_id=CHANNEL_ID,
-                text=f"{OPTION_EMOJIS[option - 1]} گزینه {option}"
+            await send_message(
+                bot,
+                f"{OPTION_EMOJIS[option - 1]} گزینه {option}"
             )
 
             await asyncio.sleep(DELAY)
 
-    print("ارسال تمام شد.")
+        print(f"Question {question} completed.")
+
+    print("All messages sent successfully.")
 
 
 if __name__ == "__main__":
